@@ -9,7 +9,7 @@ max_tries = 10000000
 alphabet = ascii_lowercase + digits
 
 
-def get_passwords():
+def brute_force():
     for i in range(1, max_length + 1):
         for password in itertools.permutations(alphabet, i):
             yield combine_tuple(password)
@@ -32,7 +32,7 @@ if len(sys.argv) == 3:
         address = (IP, port)
         my_socket.connect(address)
         # create generator
-        passwords = get_passwords()
+        passwords = brute_force()
         for _i in range(max_tries):
             try:
                 password = next(passwords)
@@ -46,7 +46,7 @@ if len(sys.argv) == 3:
                 break
 
 else:
-    passwords = get_passwords()
+    passwords = brute_force()
     for _i in range(max_tries):
         try:
             password = next(passwords)
