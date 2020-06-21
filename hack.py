@@ -24,6 +24,70 @@ def combine_tuple(letters: tuple):
     return total
 
 
+def password_combinations(string: str) -> str:
+    string = string.lower()
+    # create mask
+    sample_mask = generate_mask(string)
+    print("Sample mask : ", sample_mask)
+    bitmap_length = get_bitmap_length(string)
+    combinations = 2 ** bitmap_length
+    for i in range(combinations):
+        print("I =", i)
+        bitmap = generate_bitmap(i, bitmap_length)
+        print("Bitmap : ", bitmap)
+        mask = bitmap_to_mask(bitmap, sample_mask)
+        print("Mask : ", mask)
+        yield mask_to_string(string, mask)
+
+
+def generate_mask(string: str) -> list:
+    mask = []
+    for char in string:
+        if char in ascii_lowercase:
+            mask.append(0)
+        else:
+            mask.append(-1)
+    return mask
+
+
+def get_bitmap_length(string: str) -> int:
+    total = 0
+    for char in string:
+        if char in ascii_lowercase:
+            total += 1
+    return total
+
+
+def generate_bitmap(number: int, length: int) -> str:
+    binary = bin(number)
+    binary = binary[2:]
+    missing = length - len(binary)
+    return '0' * missing + binary
+
+
+def bitmap_to_mask(bitmap: str, mask_sample: list) -> list:
+    mask = []
+    j = 0
+    for bit in bitmap:
+        # get mask_sample[j] != -1
+        while mask_sample[j] == -1:
+            j += 1
+            mask.append(-1)
+        mask.append(bit)
+        j += 1
+    return mask
+
+
+def mask_to_string(string: str, mask: list) -> str:
+    total = ""
+    for char, bit in zip(string, mask):
+        if bit == "1":
+            total += char.upper()
+        else:
+            total += char
+    return total
+
+
 if len(sys.argv) == 3:
     IP = sys.argv[1]
     port = int(sys.argv[2])
@@ -46,10 +110,4 @@ if len(sys.argv) == 3:
                 break
 
 else:
-    passwords = brute_force()
-    for _i in range(max_tries):
-        try:
-            password = next(passwords)
-            print(password)
-        except StopIteration:
-            break
+    password_comb("abc123d")
