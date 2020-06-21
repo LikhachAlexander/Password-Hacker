@@ -24,20 +24,19 @@ def combine_tuple(letters: tuple):
     return total
 
 
-def password_combinations(string: str) -> str:
-    string = string.lower()
+def password_combinations(word: str) -> str:
+    string = word.lower()
     # create mask
     sample_mask = generate_mask(string)
-    print("Sample mask : ", sample_mask)
     bitmap_length = get_bitmap_length(string)
     combinations = 2 ** bitmap_length
-    for i in range(combinations):
-        print("I =", i)
-        bitmap = generate_bitmap(i, bitmap_length)
-        print("Bitmap : ", bitmap)
-        mask = bitmap_to_mask(bitmap, sample_mask)
-        print("Mask : ", mask)
-        yield mask_to_string(string, mask)
+    if bitmap_length > 0:
+        for i in range(combinations):
+            bitmap = generate_bitmap(i, bitmap_length)
+            mask = bitmap_to_mask(bitmap, sample_mask)
+            yield mask_to_string(string, mask)
+    else:
+        yield word.rstrip('\n')
 
 
 def generate_mask(string: str) -> list:
@@ -91,23 +90,27 @@ def mask_to_string(string: str, mask: list) -> str:
 if len(sys.argv) == 3:
     IP = sys.argv[1]
     port = int(sys.argv[2])
+    success = False
 
     with socket.socket() as my_socket:
         address = (IP, port)
         my_socket.connect(address)
         # create generator
-        passwords = brute_force()
-        for _i in range(max_tries):
-            try:
-                password = next(passwords)
-                data = password.encode()
-                my_socket.send(data)
-                response = my_socket.recv(1024).decode()
-                if response == "Connection success!":
-                    print(password)
+        with open("passwords.txt", 'r') as passwords:
+            for line in passwords:
+                for password in password_combinations(line):
+                    data = password.encode()
+                    my_socket.send(data)
+                    response = my_socket.recv(1024).decode()
+                    if response == "Connection success!":
+                        print(password)
+                        success = True
+                        break
+                if success:
                     break
-            except StopIteration:
-                break
 
 else:
-    password_comb("abc123d")
+    with open("passwords.txt", 'r') as passwords:
+        for line in passwords:
+            for password in password_combinations(line):
+                print(password)
